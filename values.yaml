@@ -1,0 +1,35 @@
+namespace: static
+
+deployment:
+  name: container-workshop
+  image: ghcr.io/torbencarstens/container-workshop:__TAG__
+  imagePullPolicy: IfNotPresent
+  revisionHistoryLimit: 1
+  replicas: 1
+  ports:
+  - 8080
+  labels:
+    app: container-workshop
+  requests:
+    cpu: 100m
+    memory: 100Mi
+  limit:
+    cpu: 300m
+    memory: 300Mi
+
+configmap:
+  nginx:
+    name: container-workshop-config
+
+service:
+  name: container-workshop
+  port: 80
+  targetPort: 8080
+  appSelector: container-workshop
+
+ingress:
+  hosts:
+    - cw.carstens.tech
+  secret: tls-container-workshop
+  issuer: letsencrypt-issuer-http
+  name: container-workshop
