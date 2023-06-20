@@ -197,6 +197,9 @@ Let's have a quick look at what `unshare` and our comomands are doing (taking `l
 
 I can recommend reading the full `strace` log but I'll spare you the effort of finding the interesting bits:
 
+<details>
+<summary>strace --follow-forks unshare ls</summary>
+
 ```bash
 $ strace --follow-forks unshare ls
 3807 execve("/usr/bin/ls", ["ls"], 0x7ffc049120f0 /* 63 vars */) = 0
@@ -206,6 +209,8 @@ $ strace --follow-forks unshare ls
 [...]
 3807 execve("/usr/bin/ls", ["ls"], 0x7ffff9934e20 /* 63 vars */) = 0
 ```
+
+</details>
 
 #### why are you showing me some execve calls
 
@@ -431,6 +436,8 @@ let's have a look at what `ps` is doing to retrieve processes.
 
 `strace` will become your friend at some point, just trust me on this.
 
+<details>
+<summary>strace --trace=openat ps</summary>
 ```bash
 $1> strace --trace=openat ps 2>&1 | head -n 50
 [...] # ps setup
@@ -459,6 +466,8 @@ openat(AT_FDCWD, "/proc/12/status", O_RDONLY) = 6
 openat(AT_FDCWD, "/proc/13/stat", O_RDONLY) = 6
 openat(AT_FDCWD, "/proc/13/status", O_RDONLY) = 6
 ```
+
+</details>
 
 `ps` reads from `/proc`, while we do have a new pid namespace, we still have the same filesystem (you may've noticed this when doing `ls` inside and outside of our unshared namespace).
 
@@ -618,6 +627,9 @@ Quick and dirty, the `ips` namespace is mostly about System V features such as s
 
 \- man-page
 
+<details>
+<summary>ipcs output for different namespaces</summary>
+
 ```bash
 $ ipcs
 ------ Message Queues --------
@@ -645,6 +657,8 @@ key        shmid      owner      perms      bytes      nattch     status
 ------ Semaphore Arrays --------
 key        semid      owner      perms      nsems
 ```
+
+</details>
 
 ### net namespace
 
