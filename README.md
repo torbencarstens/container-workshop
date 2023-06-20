@@ -6,7 +6,7 @@
 - add mount example with usb stick
 - add more sub-headlines
 - add more spoiler (\<details>) for long outputs and create an appropriate \<summary> for it
-- add disclaimer for correctness about PID vs TID in some parts of this
+- add disclaimer for correctness about PID vs TID in some parts of this (there is a TODO for this in the cgroups section due to the `tasks` file)
 
 ## conventions
 
@@ -79,9 +79,9 @@ $0> hostname
 torben-xps9320
 ```
 
-#### **entering a namespace**
-
-we can enter one or multiple namespace with `unshare`
+#### **creating a namespace**
+--
+we can create one or multiple namespace with `unshare`
 
 ```bash
 $ unshare --help
@@ -103,7 +103,7 @@ by executing `unshare {command}` our command will be run in a new namespace.
 
 #### **back to uts**
 
-Following from this we can enter the uts namespace by doing
+Following from this we can create a new uts namespace and running bash inside it
 
 ```bash
 $0> unshare --uts bash
@@ -129,9 +129,34 @@ Our shell inside the new uts namespace now has `container` as a hostname while o
 
 _Much success_
 
+#### **entering a namespace**
+
+Whilst `unshare` creates a new namespace for us, we can also attach to an existing namespace, this is especially useful for debugging purposes.
+
+```bash
+$0> unshare --uts bash
+$1> hostname container
+$0> ps -C bash
+    PID TTY          TIME CMD
+   8374 pts/0    00:00:00 bash
+$0> hostname
+torben-xps9320
+$0> nsenter --target 8374 --uts hostname
+container
+```
+
+Instead of specifying a PID we can also specify a path, we'll simply take the path to the bash namespace from the `/proc` direcotry.
+
+```bash
+sudo nsenter --uts=/proc/8374/ns/uts hostname
+container
+```
+
+Similar to unshare we can selectivly enter one or multiple namespaces.
+
 ### pid namespace
 
-1337 h4x052 that we're we simply substitute `--uts` with `--pid` and once we're _in_ once again:
+1337 h4x052 that we're we simply substitute `--uts` with `--pid` and we're _in_ once again:
 
 ```bash
 $0> sudo unshare --pid bash
@@ -144,7 +169,7 @@ bash: wait_for: No record of process 19508
 
 Or not, what is going on here?
 
-Let's have a look at the relevant processes and their namespaces, we already know that we can do this via the `/proc` files:
+Let's have a look at the relevant processes and their namespaces, we already know that we can do this via the `/proc` files.
 
 We'll start with the only pid we have so far:
 
@@ -152,7 +177,7 @@ We'll start with the only pid we have so far:
 $0> stat /proc/19508
 stat: cannot statx '/proc/19508': No such file or directory
 ```
-ok, since we don't know anything so far let's have a look at the processes which we know are running
+ok, since we don't know anything so far let's have a look at the processes which we know are running (`$1` is still our bash shell in it's own namespace)
 
 ```bash
 $1> echo $PPID # parent process of our shell in the namespace
@@ -681,9 +706,9 @@ $ unshare --net python -m http.server
 Serving HTTP on :: port 8000 (http://[::]:8000/) ...
 ```
 
-While this does work, the second serve message seems weird. With the first we know that we can simply reach it via any address our device listens on since python serves it on 0.0.0.0.
-
 The second info simply shows us that the python server is listening on the IPv6 address which is equivalent to IPv4s 0.0.0.0 (`::` omits `0` blocks for IPv6 addresses).
+
+But why is this the case?
 
 Let's have a quick look at the interfaces for our new namespace:
 
@@ -693,18 +718,19 @@ $ unshare --net ip a
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
 ```
 
-There we have it, we can't very well listen on an IP if we don't have any interfaces.
+Well, apparently we only have a loopback interface, we won't get a lot of use out of it if we want to connect to it from the outside.
 
+#### **creating a namespace which isn't bound to a process**
 
-Creating our namespace
-
-```bash
-$ ip netns add demons
-```
+Since we might want to connect multiple processes to a single net namespace or preserve a namespace across process restarts we want to create a namespace which isn't bound to a PID.
 
 We're using a separate command for creating our namespace here since it'll make following along a bit easier.
 
 This step isn't necessary and an alternative is talked about below.
+
+```bash
+$ ip netns add demons
+```
 
 #### **where do the demons live**
 
