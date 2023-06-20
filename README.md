@@ -1116,3 +1116,423 @@ In the case above, we start in our namespace with user id 0 (first `0`), and map
 >
 > For checking permissions the internal uid is mapped to that on the parent namespace, permission are checked from there recursively (in case of namespace nesting).
 
+# TODO: continue on user namespaces
+
+## control groups (cgroups)
+
+cgroups also allow us to separate certain resources for a threads, processes or a group of processes.
+
+> Control  groups, usually referred to as cgroups, are a Linux kernel feature which allow processes to be organized into hierarchical groups whose usage of various types of resources can then be limited and monitored.
+> The kernel's cgroup interface is provided through a pseudo-filesystem called cgroupfs.
+> Grouping is implemented in the core cgroup kernel code, while resource tracking and limits are implemented in a set of per-resource-type subsystems (memory, CPU, and so on).
+
+\- man cgroups
+
+### cgroups v1 vs cgroups v2
+
+# TODO
+
+### cgroups v1 overview
+
+https://www.kernel.org/doc/Documentation/admin-guide/cgroup-v1/
+
+#### cpu
+
+#### cpuacct
+
+#### cpuset
+
+#### memory
+
+#### devices
+
+#### freezer
+
+#### net_cls
+
+#### blkio
+
+#### perf_event
+
+#### net_prio
+
+#### hugetlb
+
+#### pids
+
+#### rdma
+
+
+### create a v1 cgroup
+
+First we create a cgroup with the helper command `cgcreate` (we'll do this manually later on).
+
+The minimal amount of arguments to `cgcreate` is a cgroup and the name (path to be exact) for our cgroup.
+
+```bash
+$ cgcreate -g memory:tcg1
+```
+
+so, where do these cgroups live and how can we access them?
+
+Similar to the `proc` fs we also have a special `cgroup` fs
+
+```bash
+$ mount -t cgroup
+cgroup on /sys/fs/cgroup/systemd type cgroup (rw,nosuid,nodev,noexec,relatime,xattr,name=systemd)
+cgroup on /sys/fs/cgroup/hugetlb type cgroup (rw,nosuid,nodev,noexec,relatime,hugetlb)
+cgroup on /sys/fs/cgroup/devices type cgroup (rw,nosuid,nodev,noexec,relatime,devices)
+cgroup on /sys/fs/cgroup/net_cls,net_prio type cgroup (rw,nosuid,nodev,noexec,relatime,net_cls,net_prio)
+cgroup on /sys/fs/cgroup/memory type cgroup (rw,nosuid,nodev,noexec,relatime,memory)
+cgroup on /sys/fs/cgroup/perf_event type cgroup (rw,nosuid,nodev,noexec,relatime,perf_event)
+cgroup on /sys/fs/cgroup/blkio type cgroup (rw,nosuid,nodev,noexec,relatime,blkio)
+cgroup on /sys/fs/cgroup/cpuset type cgroup (rw,nosuid,nodev,noexec,relatime,cpuset)
+cgroup on /sys/fs/cgroup/cpu,cpuacct type cgroup (rw,nosuid,nodev,noexec,relatime,cpu,cpuacct)
+cgroup on /sys/fs/cgroup/rdma type cgroup (rw,nosuid,nodev,noexec,relatime,rdma)
+cgroup on /sys/fs/cgroup/pids type cgroup (rw,nosuid,nodev,noexec,relatime,pids)
+cgroup on /sys/fs/cgroup/misc type cgroup (rw,nosuid,nodev,noexec,relatime,misc)
+cgroup on /sys/fs/cgroup/freezer type cgroup (rw,nosuid,nodev,noexec,relatime,freezer)
+```
+
+# TODO: explain cgroupfs mounts
+
+Having a look at the memory cgroup we see the following (here we see why the part behind the colon in `cgcreate` is actually the path).
+
+I've "highlighted" the `tcg1` directory, we'll explore this below 
+
+<details>
+
+<summary><pre style="display: inline;">ls -l /sys/fs/cgroup/memory</pre></summary>
+
+```bash
+$ ls -l /sys/fs/cgroup/memory
+.rw-r--r-- 0 root 13 Jun 16:20 cgroup.clone_children
+.-w--w--w- 0 root 13 Jun 16:20 cgroup.event_control
+.rw-r--r-- 0 root 13 Jun 16:00 cgroup.procs
+.r--r--r-- 0 root 13 Jun 16:20 cgroup.sane_behavior
+drwxr-xr-x - root 13 Jun 16:00 dev-hugepages.mount
+drwxr-xr-x - root 13 Jun 16:00 dev-mqueue.mount
+drwxr-xr-x - root 13 Jun 16:00 init.scope
+.rw-r--r-- 0 root 13 Jun 16:20 memory.failcnt
+.-w------- 0 root 13 Jun 16:20 memory.force_empty
+.rw-r--r-- 0 root 13 Jun 16:20 memory.kmem.failcnt
+.rw-r--r-- 0 root 13 Jun 16:20 memory.kmem.limit_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:20 memory.kmem.max_usage_in_bytes
+.r--r--r-- 0 root 13 Jun 16:20 memory.kmem.slabinfo
+.rw-r--r-- 0 root 13 Jun 16:20 memory.kmem.tcp.failcnt
+.rw-r--r-- 0 root 13 Jun 16:20 memory.kmem.tcp.limit_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:20 memory.kmem.tcp.max_usage_in_bytes
+.r--r--r-- 0 root 13 Jun 16:20 memory.kmem.tcp.usage_in_bytes
+.r--r--r-- 0 root 13 Jun 16:20 memory.kmem.usage_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:00 memory.limit_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:20 memory.max_usage_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:20 memory.memsw.failcnt
+.rw-r--r-- 0 root 13 Jun 16:20 memory.memsw.limit_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:20 memory.memsw.max_usage_in_bytes
+.r--r--r-- 0 root 13 Jun 16:20 memory.memsw.usage_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:20 memory.move_charge_at_immigrate
+.r--r--r-- 0 root 13 Jun 16:20 memory.numa_stat
+.rw-r--r-- 0 root 13 Jun 16:20 memory.oom_control
+.--------- 0 root 13 Jun 16:20 memory.pressure_level
+.rw-r--r-- 0 root 13 Jun 16:20 memory.soft_limit_in_bytes
+.r--r--r-- 0 root 13 Jun 16:20 memory.stat
+.rw-r--r-- 0 root 13 Jun 16:20 memory.swappiness
+.r--r--r-- 0 root 13 Jun 16:20 memory.usage_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:00 memory.use_hierarchy
+.rw-r--r-- 0 root 13 Jun 16:20 notify_on_release
+.rw-r--r-- 0 root 13 Jun 16:20 release_agent
+drwxr-xr-x - root 13 Jun 16:00 sys-fs-fuse-connections.mount
+drwxr-xr-x - root 13 Jun 16:00 sys-kernel-config.mount
+drwxr-xr-x - root 13 Jun 16:00 sys-kernel-debug.mount
+drwxr-xr-x - root 13 Jun 16:00 sys-kernel-tracing.mount
+drwxr-xr-x - root 13 Jun 16:00 system.slice
+.rw-r--r-- 0 root 13 Jun 16:20 tasks
+drwxr-xr-x - root 13 Jun 16:19 tcg1 # ===========================================================
+drwxr-xr-x - root 13 Jun 16:00 user.slice
+```
+
+</details>
+
+Before we explore the complete `/sys/fs/cgroup` directory let's have a look at our own (`tcg1`) cgroup first.
+
+<details>
+<summary>ls for tcg1 cgroup</summary>
+
+```bash
+$ ls -l /sys/fs/cgroup/memory/tcg1
+.rw-r--r-- 0 root 13 Jun 16:19 cgroup.clone_children
+.-w--w--w- 0 root 13 Jun 16:19 cgroup.event_control
+.rw-r--r-- 0 root 13 Jun 16:19 cgroup.procs
+.rw-r--r-- 0 root 13 Jun 16:19 memory.failcnt
+.-w------- 0 root 13 Jun 16:19 memory.force_empty
+.rw-r--r-- 0 root 13 Jun 16:19 memory.kmem.failcnt
+.rw-r--r-- 0 root 13 Jun 16:19 memory.kmem.limit_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:19 memory.kmem.max_usage_in_bytes
+.r--r--r-- 0 root 13 Jun 16:19 memory.kmem.slabinfo
+.rw-r--r-- 0 root 13 Jun 16:19 memory.kmem.tcp.failcnt
+.rw-r--r-- 0 root 13 Jun 16:19 memory.kmem.tcp.limit_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:19 memory.kmem.tcp.max_usage_in_bytes
+.r--r--r-- 0 root 13 Jun 16:19 memory.kmem.tcp.usage_in_bytes
+.r--r--r-- 0 root 13 Jun 16:19 memory.kmem.usage_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:19 memory.limit_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:19 memory.max_usage_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:19 memory.memsw.failcnt
+.rw-r--r-- 0 root 13 Jun 16:19 memory.memsw.limit_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:19 memory.memsw.max_usage_in_bytes
+.r--r--r-- 0 root 13 Jun 16:19 memory.memsw.usage_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:19 memory.move_charge_at_immigrate
+.r--r--r-- 0 root 13 Jun 16:19 memory.numa_stat
+.rw-r--r-- 0 root 13 Jun 16:19 memory.oom_control
+.--------- 0 root 13 Jun 16:19 memory.pressure_level
+.rw-r--r-- 0 root 13 Jun 16:19 memory.soft_limit_in_bytes
+.r--r--r-- 0 root 13 Jun 16:19 memory.stat
+.rw-r--r-- 0 root 13 Jun 16:19 memory.swappiness
+.r--r--r-- 0 root 13 Jun 16:19 memory.usage_in_bytes
+.rw-r--r-- 0 root 13 Jun 16:19 memory.use_hierarchy
+.rw-r--r-- 0 root 13 Jun 16:19 notify_on_release
+.rw-r--r-- 0 root 13 Jun 16:19 tasks
+```
+
+</details>
+
+Having a look at all the files, the file which is probably most relevant for a normal application is `memory.limit_in_bytes`
+
+```bash
+cat /sys/fs/cgroup/memory/tcg1/memory.limit_in_bytes
+9223372036854771712
+```
+
+<details>
+<summary>explanation for the value from stackexchange</summary>
+
+<blockquote>
+The value comes from the cgroup setup in the memory management layer; by default, it’s set to PAGE_COUNTER_MAX, which is LONG_MAX / PAGE_SIZE on 64-bit platforms, and multiplied by PAGE_SIZE again when read.
+
+This confirms ilkkachu’s explanation: the value is the maximum 64-bit signed integer, rounded to the nearest page (by dropping the last bits).
+</blockquote>
+
+<blockquote>
+That's the highest positive signed 64-bit integer (263-1), rounded down to multiples of 4096 (212), the most common page size on x86 systems. It would seem difficult to get anything higher while avoiding possible confusion between signed and unsigned, so it seems at least a reasonable approximation for infinity.
+
+That said, I don't know for sure, this is just a guess.
+</blockquote>
+
+[source](https://unix.stackexchange.com/questions/420906/what-is-the-value-for-the-cgroups-limit-in-bytes-if-the-memory-is-not-restricte)
+</details>
+
+This simply means that we've "infinite" memory by default, this is the default behaviour. Processes can allocate memory as long as the system has any memory left.
+
+If we want to constrain our application to a certain memory limit (which it shouldn't reach) then we can write this value into the `memory.limit_in_bytes` file.
+
+```bash
+$ echo -n 0 > /sys/fs/cgroup/memory/tcg1/memory.limit_in_bytes
+$ cat /sys/fs/cgroup/memory/tcg1/memory.limit_in_bytes
+0
+```
+
+With this the process we'll execute in this cgroup should be killed immediately since it cannot allocate any memory.
+
+#### executing a process inside a cgroup
+
+We're starting out with a helper command once again, `cgexec` is the equivalent of `nsenter` for cgroups
+
+```bash
+$ cgexec memory:tcg1 bash
+[1]    32060 killed     sudo cgexec -g memory:tcg1 bash
+$ echo $?
+137
+```
+
+Our command got killed immediately (as suspected).
+
+<details>
+
+<summary>having a closer look at exit code 137</summary>
+
+> When a command terminates on a fatal signal N, bash uses the value of 128+N as the exit status.
+
+\- man bash (`EXIT STATUS` section)
+
+We now need to find the signal with the number 9 (137 - 128 = 9).
+
+We can do this with the kill command
+
+```bash
+$ kill -l 9
+KILL
+```
+
+How do we know that in our case exit code `137` is an oom kill and not something else (I could just as well have sent a `SIGKILL` with `kill -9 {process}`).
+
+Luckily for us the kernel logs all oom kills in it's ring buffer, we can check this with `dmesg`
+
+```bash
+$ dmesg
+[...]
+[ 3777.664404] Memory cgroup out of memory: Killed process 32311 (cgexec) total-vm:7620kB, anon-rss:640kB, file-rss:2432kB, shmem-rss:0kB, UID:0 pgtables:52kB oom_score_adj:0
+```
+
+So, while `137` isn't necessarily an OOMError, in this case we've confirmed that it is one.
+
+Most tools (container runtimes, kubernetes, [...]) will provide you with the reason why they've killed the process.
+
+</details>
+
+Let's allow `ls` to allocate 1 MB of memory
+
+```bash
+$ sudo sh -c 'echo -n 1000000 > /sys/fs/cgroup/memory/tcg1/memory.limit_in_bytes'
+$ sudo cgexec -g memory:tcg1 ls
+Downloads  execve.log  projects  tmp  trace.log
+```
+
+You might think that `1 MB` is now an acceptable value for maximum memory consumption for `ls`, setting this value for your application should be carefully tested for all use cases though
+
+```bash
+$ cgexec -g memory:tcg1 ls -R /
+[...]
+/etc/wpa_supplicant:
+[1]    34293 killed     sudo cgexec -g memory:tcg1 ls -R /
+$ dmesg
+[ 4751.852361] Memory cgroup out of memory: Killed process 34294 (ls) total-vm:6280kB, anon-rss:256kB, file-rss:2304kB, shmem-rss:0kB, UID:0 pgtables:44kB oom_score_adj:0
+```
+
+#### connection between process and cgroup
+
+```bash
+$ ps -C bash
+    PID TTY          TIME CMD
+  35156 pts/0    00:00:00 bash
+$ cat /proc/35156/cgroup
+13:freezer:/
+12:misc:/
+11:pids:/user.slice/user-1000.slice/session-2.scope
+10:rdma:/
+9:cpu,cpuacct:/
+8:cpuset:/
+7:blkio:/
+6:perf_event:/
+5:memory:/tcg1
+4:net_cls,net_prio:/
+3:devices:/user.slice
+2:hugetlb:/
+1:name=systemd:/user.slice/user-1000.slice/session-2.scope
+0::/user.slice/user-1000.slice/session-2.scope
+```
+
+We see that the memory cgroup has the `/tcg1` path in constract to most other groups having the root (`/`) path.
+
+# TODO: talk more about cgroup mountpoints
+
+I know you've been anxious to finally see strace again, so here we go (I'll spare you the complete output though ;))
+
+```bash
+$ strace --trace=openat,write,close cgexec -g memory:tcg1 bash
+[...]
+openat(AT_FDCWD, "/sys/fs/cgroup/memory//tcg1/tasks", O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC, 0666) = 3
+write(3, "37051", 5)                    = 5
+close(3)
+[...]
+execve("/usr/bin/bash", ["bash"], 0x7ffd0201da30 /* 27 vars */) = 0
+[...]
+$ ps -C bash
+    PID TTY          TIME CMD
+  37051 pts/1    00:00:00 bash
+$ cat /sys/fs/cgroup/memory/tcg1/tasks
+37051
+```
+
+We now know that processes are connected via the `tasks` file in the respective cgroup (we'll explore this later on when we create cgroups manually).
+
+Note that `execve` is executed after writing the PID to the tasks file (also keep in mind that `execve` keeps the PID; in constrast to `fork`).
+
+#### cleanup
+
+we can delete our cgroup via the helper command `cgdelete`
+
+```bash
+$ cgdelete memory:tcg1
+$ stat /sys/fs/cgroup/memory/tcg1
+stat: cannot statx '/sys/fs/cgroup/memory/tcg1': No such file or directory
+```
+
+### manually creating a cgroup
+
+Manually creating a cgroup is somewhat easy since most of the work is done by the kernel for us.
+
+We simply create a directory (name of the cgroup) in the correct control group mount.
+
+```bash
+$ cd /sys/fs/cgroup/memory
+$ mkdir tcg1
+```
+
+<details>
+<summary>ls for the memory:tcg1 cgroup</summary>
+
+```bash
+$ ls -l tcg1
+.rw-r--r-- 0 root 13 Jun 17:25 cgroup.clone_children
+.-w--w--w- 0 root 13 Jun 17:25 cgroup.event_control
+.rw-r--r-- 0 root 13 Jun 17:25 cgroup.procs
+.rw-r--r-- 0 root 13 Jun 17:25 memory.failcnt
+.-w------- 0 root 13 Jun 17:25 memory.force_empty
+.rw-r--r-- 0 root 13 Jun 17:25 memory.kmem.failcnt
+.rw-r--r-- 0 root 13 Jun 17:25 memory.kmem.limit_in_bytes
+.rw-r--r-- 0 root 13 Jun 17:25 memory.kmem.max_usage_in_bytes
+.r--r--r-- 0 root 13 Jun 17:25 memory.kmem.slabinfo
+.rw-r--r-- 0 root 13 Jun 17:25 memory.kmem.tcp.failcnt
+.rw-r--r-- 0 root 13 Jun 17:25 memory.kmem.tcp.limit_in_bytes
+.rw-r--r-- 0 root 13 Jun 17:25 memory.kmem.tcp.max_usage_in_bytes
+.r--r--r-- 0 root 13 Jun 17:25 memory.kmem.tcp.usage_in_bytes
+.r--r--r-- 0 root 13 Jun 17:25 memory.kmem.usage_in_bytes
+.rw-r--r-- 0 root 13 Jun 17:25 memory.limit_in_bytes
+.rw-r--r-- 0 root 13 Jun 17:25 memory.max_usage_in_bytes
+.rw-r--r-- 0 root 13 Jun 17:25 memory.memsw.failcnt
+.rw-r--r-- 0 root 13 Jun 17:25 memory.memsw.limit_in_bytes
+.rw-r--r-- 0 root 13 Jun 17:25 memory.memsw.max_usage_in_bytes
+.r--r--r-- 0 root 13 Jun 17:25 memory.memsw.usage_in_bytes
+.rw-r--r-- 0 root 13 Jun 17:25 memory.move_charge_at_immigrate
+.r--r--r-- 0 root 13 Jun 17:25 memory.numa_stat
+.rw-r--r-- 0 root 13 Jun 17:25 memory.oom_control
+.--------- 0 root 13 Jun 17:25 memory.pressure_level
+.rw-r--r-- 0 root 13 Jun 17:25 memory.soft_limit_in_bytes
+.r--r--r-- 0 root 13 Jun 17:25 memory.stat
+.rw-r--r-- 0 root 13 Jun 17:25 memory.swappiness
+.r--r--r-- 0 root 13 Jun 17:25 memory.usage_in_bytes
+.rw-r--r-- 0 root 13 Jun 17:25 memory.use_hierarchy
+.rw-r--r-- 0 root 13 Jun 17:25 notify_on_release
+.rw-r--r-- 0 root 13 Jun 17:25 tasks
+```
+
+</details>
+
+Since we know that the `tasks` file has a list of associated PIDs we start a process and try to write this into the tasks file.
+
+```bash
+$0> bash # creates shell with id #1
+$1> echo -n $$ > /sys/fs/cgroup/memory/tcg1/tasks # this can be executed in any cgroup
+$1> cat /sys/fs/cgroup/memory/tcg1/tasks
+37697
+37766
+$0> cat /sys/fs/cgroup/memory/tcg1/tasks
+37697
+```
+
+We observe that all subprocesses inherit the cgroup from the current process (PID `37766` is `cat` inside the bash shell which we connected to the `memory:tcg1` group).
+
+What is the difference to executing the process before writing it to the tasks file (manual) vs. writing it after (`cgexec`).
+
+Mainly that the process can use more of the to be assigned resource (memory in our case).
+
+For a VERY simplified version with hardcoded values have a look at [cgexec.c](cgexec.c).
+
+`cgdelete` essentially just deletes our cgroup directories, so let's do the same.
+
+```bash
+$ rmdir /sys/fs/cgroup/memory/tcg1
+```
+
+> NOTE: `rm -rf /sys/fs/cgroup/memory/tcg1` doesn't work in this case since the files are locked by the kernel.
+
+# TODO: what happens to the process restrictions (written into another tasks file, fallback, nested cgroups, ...)?
