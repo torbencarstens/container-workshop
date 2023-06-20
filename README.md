@@ -2,9 +2,11 @@
 
 ## general TODOs
 
-talk about nsenter earlier
-
-add mount example with usb stick
+- talk about nsenter earlier
+- add mount example with usb stick
+- add more sub-headlines
+- add more spoiler (\<details>) for long outputs and create an appropriate \<summary> for it
+- add disclaimer for correctness about PID vs TID in some parts of this
 
 ## conventions
 
