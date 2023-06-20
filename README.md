@@ -1420,7 +1420,7 @@ $ cat /proc/35156/cgroup
 0::/user.slice/user-1000.slice/session-2.scope
 ```
 
-We see that the memory cgroup has the `/tcg1` path in constract to most other groups having the root (`/`) path.
+We see that the memory cgroup has the `/tcg1` path, in contrast to most other groups having the root (`/`) path.
 
 # TODO: talk more about cgroup mountpoints
 
@@ -1446,6 +1446,9 @@ We now know that processes are connected via the `tasks` file in the respective 
 
 Note that `execve` is executed after writing the PID to the tasks file (also keep in mind that `execve` keeps the PID; in constrast to `fork`).
 
+# TODO: not quite correct
+> Note: This file is called tasks since `tasks` is what linux calls processes internally
+
 #### cleanup
 
 we can delete our cgroup via the helper command `cgdelete`
@@ -1458,7 +1461,7 @@ stat: cannot statx '/sys/fs/cgroup/memory/tcg1': No such file or directory
 
 ### manually creating a cgroup
 
-Manually creating a cgroup is somewhat easy since most of the work is done by the kernel for us.
+Manually creating a cgroup is easy since most of the work is done by the kernel for us.
 
 We simply create a directory (name of the cgroup) in the correct control group mount.
 
@@ -1533,6 +1536,6 @@ For a VERY simplified version with hardcoded values have a look at [cgexec.c](cg
 $ rmdir /sys/fs/cgroup/memory/tcg1
 ```
 
-> NOTE: `rm -rf /sys/fs/cgroup/memory/tcg1` doesn't work in this case since the files are locked by the kernel.
+This works as long as there are no remaining processes associated with this cgroup.
 
-# TODO: what happens to the process restrictions (written into another tasks file, fallback, nested cgroups, ...)?
+> NOTE: `rm -rf /sys/fs/cgroup/memory/tcg1` doesn't work (Operation not permitted) in this case since the files are locked by the kernel.
