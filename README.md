@@ -1639,3 +1639,11 @@ $ rmdir /sys/fs/cgroup/memory/tcg1
 This works as long as there are no remaining processes associated with this cgroup.
 
 > NOTE: `rm -rf /sys/fs/cgroup/memory/tcg1` doesn't work (Operation not permitted) in this case since the files are locked by the kernel.
+
+``` {=html}
+<style>
+body {
+  max-width: 60% !important;
+}
+</style>
+```
