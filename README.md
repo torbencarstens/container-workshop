@@ -84,7 +84,7 @@ torben-xps9320
 ```
 
 #### **creating a namespace**
---
+
 we can create one or multiple namespace with `unshare`
 
 ```bash
