@@ -31,5 +31,5 @@ ingress:
   hosts:
     - cw.carstens.tech
   secret: tls-container-workshop
-  issuer: letsencrypt-issuer-http
+  issuer: letsencrypt-issuer
   name: container-workshop
