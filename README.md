@@ -564,6 +564,76 @@ $ unshare --fork --pid --mount-proc ls /proc | head -n 2
 acpi
 ```
 
+#### **where `mount` retrieves the information from
+
+```bash
+$ cat /proc/$$/mounts | head -n 5
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+sysfs /sys sysfs rw,nosuid,nodev,noexec,relatime 0 0
+devtmpfs /dev devtmpfs rw,nosuid,size=4096k,nr_inodes=4054021,mode=755,inode64 0 0
+securityfs /sys/kernel/security securityfs rw,nosuid,nodev,noexec,relatime 0 0
+tmpfs /dev/shm tmpfs rw,nosuid,nodev,inode64 0 0
+```
+
+This is pretty much what we see if we simply list our mounts
+
+<details>
+<summary><pre style="display: inline;">mount</pre></summary>
+
+```bash
+$ mount | head -n 5
+proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)
+sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,relatime)
+devtmpfs on /dev type devtmpfs (rw,nosuid,size=4096k,nr_inodes=4054021,mode=755,inode64)
+securityfs on /sys/kernel/security type securityfs (rw,nosuid,nodev,noexec,relatime)
+tmpfs on /dev/shm type tmpfs (rw,nosuid,nodev,inode64)
+```
+
+</details>
+
+Does mount read from `/proc/$$/mounts` though?
+
+<details>
+<summary>strace answer</summary>
+
+```bash
+$ strace -e trace=openat mount
+openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/usr/lib/libmount.so.1", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/usr/lib/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/usr/lib/libblkid.so.1", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 3
+```
+
+No, mount reads from `/proc/self/mountinfo` which looks like this
+
+```bash
+$ cat /proc/$$/mountinfo | head -n 5
+20 107 0:19 / /proc rw,nosuid,nodev,noexec,relatime shared:26 - proc proc rw
+21 107 0:20 / /sys rw,nosuid,nodev,noexec,relatime shared:2 - sysfs sysfs rw
+22 107 0:5 / /dev rw,nosuid shared:22 - devtmpfs devtmpfs rw,size=4096k,nr_inodes=4054021,mode=755,inode64
+23 21 0:6 / /sys/kernel/security rw,nosuid,nodev,noexec,relatime shared:3 - securityfs securityfs rw
+24 22 0:21 / /dev/shm rw,nosuid,nodev shared:23 - tmpfs tmpfs rw,inode64
+```
+
+</details>
+
+```bash
+$0> unshare -m bash
+$1> mount -t tmpfs tmpfs /mnt
+$1> touch /mnt/myspace
+$0> ls /mnt
+# no myspace :(
+$1> ls /mnt
+myspace
+$0> ps -C bash
+    PID TTY          TIME CMD
+  16255 pts/2    00:00:00 bash
+$0> nsenter -t 16255 -m ls /mnt
+myspace
+```
+
 **TODO** talk about peer groups (slave, unbindable, [...])
 
 ### combining pid and mount
