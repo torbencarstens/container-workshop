@@ -1,5 +1,9 @@
 # Let's build a container runtime
 
+## DISCLAIMER
+
+This is still very much WIP, I'll work on this in the next few weeks (months?)
+
 ## general TODOs
 
 - talk about nsenter earlier
