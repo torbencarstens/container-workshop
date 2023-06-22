@@ -1640,6 +1640,20 @@ This works as long as there are no remaining processes associated with this cgro
 
 > NOTE: `rm -rf /sys/fs/cgroup/memory/tcg1` doesn't work (Operation not permitted) in this case since the files are locked by the kernel.
 
+## runtime
+
+```bash
+$0> unshare -U --fork bash
+$1> echo $$
+64766
+$0> echo "0 1000 65335" | tee /proc/64766/uid_map
+$0> echo "0 1000 65335" | tee /proc/64766/gid_map
+$1> unshare --ipcs --uts --fork bash
+$2> hostname container
+# ip setup
+$2> unshare --pid --mount --fork bash
+```
+
 ``` {=html}
 <style>
 body {
