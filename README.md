@@ -1652,6 +1652,15 @@ $1> unshare --ipcs --uts --fork bash
 $2> hostname container
 # ip setup
 $2> unshare --pid --mount --fork bash
+$3> wget https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/alpine-minirootfs-3.18.2-x86_64.tar.gz
+$3> mkdir alpine
+$3> tar xzf alpine-minirootfs-3.18.2-x86_64.tar.gz -C alpine
+$3> mount --bind alpine alpine
+$3> cd alpine
+$3> mkdir hostfs
+$3> pivot_root . hostfs
+$3> umount -l hostfs
+
 ```
 
 ``` {=html}
