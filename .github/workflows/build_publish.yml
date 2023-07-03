@@ -13,10 +13,9 @@ jobs:
       - uses: actions/checkout@v3
       - name: update tag in manifest.yml
         run: sed -i -e "s#__TAG__#${GITHUB_SHA}#g" values.yaml
-      - name: install helm chart
-        uses: WyriHaximus/github-action-helm3@v2
+      - uses: OpenAlcoholics/github-action-helm@v0.1.5
         with:
-          exec: helm lint --strict
+          raw_command: lint --strict
 
   build_push_docker:
     runs-on: ubuntu-latest
