@@ -5,7 +5,7 @@ WORKDIR /app
 ADD README.md README.md
 RUN pandoc README.md --standalone -o out.html --toc --toc-depth=4 --metadata title="Let's build a container runtime"
 
-FROM nginxinc/nginx-unprivileged:1.25.1
+FROM nginxinc/nginx-unprivileged:1.25.2
 
 ADD nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/out.html /usr/share/nginx/html/index.html
